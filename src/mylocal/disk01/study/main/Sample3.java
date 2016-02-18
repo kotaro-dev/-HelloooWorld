@@ -99,14 +99,9 @@ public class Sample3 {
 
 	private void execute() {
 
-		Connection conn = null;
-		Statement  st = null;
-		ResultSet  rs = null;
-
-		try {
-			conn = getConnection();
-			st = conn.createStatement();
-			rs = st.executeQuery(SAMPLE_SQL1);
+		try (Connection conn = getConnection();
+			Statement st = conn.createStatement();
+			ResultSet rs = st.executeQuery(SAMPLE_SQL1);) {
 
 			boolean hashNext = rs.next();
 			if (!hashNext) {
@@ -127,58 +122,60 @@ public class Sample3 {
 						+ "," + rs.getString(3)
 				);
 			}
+
 		} catch (RuntimeException e) {
 			// TODO: handle exception
 		} catch (SQLException e) {
 			// TODO: handle exception
 			logger.error("That Error occurred when access into the DB. ",e);
-		} finally {
-			// TODO: handle finally clause
-			close(rs);
-			close(st);
-			close(conn);
 		}
+
 
 	}
 
 	private void executeUpd() {
-		Connection conn = null;
-		PreparedStatement ps = null;
 
-		try {
-			conn = getConnection();
-			ps = conn.prepareStatement(SAMPLE_INS_SQL1);
+		try (Connection conn = getConnection();) {
+			try (PreparedStatement ps = prepareStatement(conn,13,"Ubuntu14","14.03.01","Ubuntu List");) {
 
-			ps.setInt(1, 12);
-			ps.setString(2, "Ubuntu14");
-			ps.setString(3, "14.02.01");
-			ps.setString(4, "Ubuntu List");
+				ps.executeUpdate();
+				conn.commit();
 
-			ps.executeUpdate();
-			conn.commit();
-
+			} catch (RuntimeException e) {
+				// TODO: handle exception
+			} catch (SQLException e) {
+				// TODO: handle exception
+				logger.error("That Error occurred when access into the DB. ",e);
+				try {
+					if (!conn.isClosed()) {
+						conn.rollback();
+					}
+				} catch (SQLException e2) {
+					// TODO: handle exception
+					logger.warn("Failed to rollback.",e2);
+				} catch (UnsupportedOperationException e2) {
+					// TODO: handle exception
+					logger.warn("Failed to rollback.",e2);
+				}
+			}
 		} catch (RuntimeException e) {
 			// TODO: handle exception
 		} catch (SQLException e) {
 			// TODO: handle exception
 			logger.error("That Error occurred when access into the DB. ",e);
-
-			try {
-				if (!conn.isClosed()) {
-					conn.rollback();
-				}
-			} catch (SQLException e2) {
-				// TODO: handle exception
-				logger.warn("Failed to rollback.",e2);
-			} catch (UnsupportedOperationException e2) {
-				// TODO: handle exception
-				logger.warn("Failed to rollback.",e2);
-			}
-		} finally {
-			// TODO: handle finally clause
-			close(ps);
-			close(conn);
 		}
+	}
+
+	private PreparedStatement prepareStatement(
+			Connection conn, int param1, String param2, String param3, String param4) throws SQLException {
+
+		PreparedStatement ps = conn.prepareStatement(SAMPLE_INS_SQL1);
+
+		ps.setInt(1, param1);
+		ps.setString(2, param2);
+		ps.setString(3, param3);
+		ps.setString(4, param4);
+		return ps;
 	}
 
 }
