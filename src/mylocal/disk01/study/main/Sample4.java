@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class Sample4 {
@@ -31,6 +32,7 @@ public class Sample4 {
 	private static final String SHEET_NAME = "mySheet";
 
 	private static final String CURRENT_DIR = System.getProperty("user.dir", BOOK_PATH);
+	private static final String FILEPATH = new File(CURRENT_DIR, BOOK_NAME).getPath();
 
 
 	public static void main(String[] args) {
@@ -134,32 +136,100 @@ public class Sample4 {
 
 	private void createExcel() {
 
-		System.out.println(CURRENT_DIR);
-		String filePath = new File(CURRENT_DIR, BOOK_NAME).getPath();
-		System.out.println(filePath);
-
-		System.exit(0);
+		//System.out.println(CURRENT_DIR);
+		//String filePath = new File(CURRENT_DIR, BOOK_NAME).getPath();
+		System.out.println(FILEPATH);
+		//System.exit(0);
 
 		try (Workbook book = new XSSFWorkbook(); ) {
 
-			Sheet sheet = book.createSheet(SHEET_NAME);
-
-			Row row = sheet.createRow(0);
-			Cell cell = row.createCell(0);
-
-			//set cell value
-			cell.setCellValue("Hello World! 2!");
-
-			//style set
+			//style & font set
 			CellStyle style = book.createCellStyle();
+
+			//set border
+			style.setBorderTop(CellStyle.BORDER_THIN);
+			style.setBorderBottom(CellStyle.BORDER_HAIR);
+			style.setBorderLeft(CellStyle.BORDER_MEDIUM);
+			style.setBorderRight(CellStyle.BORDER_DOTTED);
+
 			Font font = book.createFont();
 			font.setColor(IndexedColors.AQUA.getIndex());
+
+			Row  row    = null;
+			Cell cell   = null;
+			int  rowNum = 0;
+			int  colNum = 0;
+
+			Sheet sheet = null;
+
+			for (int i = 0; i < 3; i++) {
+				//sheet create & name set
+				sheet = book.createSheet(SHEET_NAME+i);
+
+				//create header line
+				rowNum = 0;
+				colNum = 0;
+				row = sheet.createRow(rowNum);
+
+				cell = row.createCell(colNum);
+				cell.setCellValue(rowNum+"-"+colNum);  //set cell value
+
+				cell = row.createCell(++colNum);
+				cell.setCellValue(rowNum+"-"+colNum+"longlonglongcell");
+
+				cell = row.createCell(++colNum);
+				cell.setCellValue(rowNum+"-"+colNum);
+
+				cell = row.createCell(++colNum);
+				cell.setCellValue(rowNum+"-"+colNum);
+
+				cell = row.createCell(++colNum);
+				cell.setCellValue(rowNum+"-"+colNum);
+
+				cell = row.createCell(++colNum);
+				cell.setCellValue(rowNum+"-"+colNum);
+
+				//fixed
+				sheet.createFreezePane(1, 1);
+
+				//auto fillter
+				//sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, colNum));
+
+				//auto size col
+				for (int j = 0; j < colNum; j++) {
+					sheet.autoSizeColumn(j, true);
+				}
+
+				//create data row
+				for (int j = 0; j < 10; j++) {
+					rowNum++;
+					colNum = 0;
+
+					row = sheet.createRow(rowNum);
+
+					for (int j2 = 0; j2 < 6; j2++) {
+						cell = row.createCell(j2);
+						cell.setCellValue(rowNum+"-"+j2);
+
+						cell.setCellStyle(style);
+					}
+					for (int j2 = 0; j2 < 6; j2++) {
+						sheet.autoSizeColumn(j2, true);
+					}
+
+				}
+				sheet.addMergedRegion(new CellRangeAddress(1, 2, 1, 3));
+
+
+			}
+
+
 
 			style.setFont(font);
 			cell.setCellStyle(style);
 
 			//output file
-			try (FileOutputStream out = new FileOutputStream(filePath);) {
+			try (FileOutputStream out = new FileOutputStream(FILEPATH);) {
 				book.write(out);
 			} catch (IOException e) {
 				// TODO: handle exception
